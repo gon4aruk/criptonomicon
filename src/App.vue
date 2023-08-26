@@ -29,7 +29,7 @@
         <div class="flex">
           <div class="max-w-xs">
             <label for="wallet" class="block text-sm font-medium text-gray-700"
-              >Тикер</label
+              >Тікер</label
             >
             <div class="mt-1 relative rounded-md shadow-md">
               <input
@@ -40,33 +40,25 @@
                 id="wallet"
                 class="block w-full pr-10 border-gray-300 text-gray-900 focus:outline-none focus:ring-gray-500 focus:border-gray-500 sm:text-sm rounded-md"
                 placeholder="Например DOGE"
+                @focus="isTickerIncludes = false"
               />
             </div>
-            <!-- <div
+            <div
+              v-if="ticker"
               class="flex bg-white shadow-md p-1 rounded-md shadow-md flex-wrap"
             >
               <span
+                v-for="(tickerName, idx) in getSimilarTickers"
+                :key="idx"
                 class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer"
+                @click="handleSimilarTickerClick(tickerName)"
               >
-                BTC
+                {{ tickerName }}
               </span>
-              <span
-                class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer"
-              >
-                DOGE
-              </span>
-              <span
-                class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer"
-              >
-                BCH
-              </span>
-              <span
-                class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer"
-              >
-                CHD
-              </span>
-            </div> -->
-            <!-- <div class="text-sm text-red-600">Такой тикер уже добавлен</div> -->
+            </div>
+            <div v-if="isTickerIncludes" class="text-sm text-red-600">
+              Такий тікер вже існує
+            </div>
           </div>
         </div>
         <button
@@ -87,7 +79,7 @@
               d="M13 7h-2v4H7v2h4v4h2v-4h4v-2h-4V7zm-1-5C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"
             ></path>
           </svg>
-          Добавить
+          Додати
         </button>
       </section>
 
@@ -126,7 +118,7 @@
                   d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
                   clip-rule="evenodd"
                 ></path></svg
-              >Удалить
+              >Видалити
             </button>
           </div>
         </dl>
@@ -185,10 +177,43 @@ export default {
       tickers: [],
       selectedTicker: null,
       graph: [],
+      coinList: [],
+      isTickerIncludes: false,
     };
+  },
+  computed: {
+    getSimilarTickers() {
+      return this.coinList
+        .filter(
+          (el) =>
+            el.includes(this.ticker) ||
+            el.includes(this.ticker.toUpperCase()) ||
+            el.includes(this.ticker.toLowerCase())
+        )
+        .slice(0, 4);
+    },
+  },
+  async created() {
+    const f = await fetch(
+      "https://min-api.cryptocompare.com/data/all/coinlist?summary=true"
+    );
+    const res = await f.json();
+    this.coinList = Object.values(res.Data).map((el) => el.Symbol);
   },
   methods: {
     addTicker() {
+      if (
+        this.tickers.find(
+          (el) =>
+            el.name === this.ticker ||
+            el.name === this.ticker.toLowerCase() ||
+            el.name === this.ticker.toUpperCase()
+        )
+      ) {
+        this.isTickerIncludes = true;
+        return;
+      }
+
       const currentTicker = { name: this.ticker, price: "-" };
       this.tickers.push(currentTicker);
 
@@ -220,6 +245,11 @@ export default {
       return this.graph.map(
         (price) => 5 + ((price - minValue) * 95) / (maxValue - minValue)
       );
+    },
+    handleSimilarTickerClick(tickerName) {
+      if (this.isTickerIncludes) this.isTickerIncludes = false;
+      this.ticker = tickerName;
+      this.addTicker();
     },
   },
 };
