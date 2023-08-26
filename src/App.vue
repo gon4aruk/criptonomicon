@@ -198,7 +198,7 @@ export default {
         );
         const res = await f.json();
         this.tickers.find((t) => t.name === currentTicker.name).price =
-          res.USD > 1 ? res.USD.toFixed(2) : res.USD.toPrecision(2);
+          res.USD > 1 ? res.USD?.toFixed(2) : res.USD?.toPrecision(2);
         if (currentTicker.name === this.selectedTicker?.name)
           this.graph.push(res.USD);
       }, 5000);
@@ -224,5 +224,3 @@ export default {
   },
 };
 </script>
-
-<style src="./app.css"></style>
